@@ -1,0 +1,45 @@
+hw7test.c: In function ‘main’:
+hw7test.c:20:11: error: ‘data’ undeclared (first use in this function)
+  for(p = &data[0][0]; p <= &data[count_rows - 1][max_cols - 1]; p++)
+           ^
+hw7test.c:20:11: note: each undeclared identifier is reported only once for each function it appears in
+hw7test.c:26:2: error: incompatible type for argument 1 of ‘store_bucket’
+  store_bucket(fp, bucket);
+  ^
+hw7test.c:4:6: note: expected ‘FILE’ but argument is of type ‘struct FILE *’
+ void store_bucket(FILE , int []);
+      ^
+hw7test.c:26:2: warning: passing argument 2 of ‘store_bucket’ from incompatible pointer type [enabled by default]
+  store_bucket(fp, bucket);
+  ^
+hw7test.c:4:6: note: expected ‘int *’ but argument is of type ‘int (*)[(sizetype)(max_cols)]’
+ void store_bucket(FILE , int []);
+      ^
+hw7test.c: In function ‘store_bucket’:
+hw7test.c:66:2: error: incompatible type for argument 1 of ‘fgetc’
+  while( (ch = fgetc(fp)) != EOF)
+  ^
+In file included from hw7test.c:1:0:
+/usr/include/stdio.h:531:12: note: expected ‘struct FILE *’ but argument is of type ‘FILE’
+ extern int fgetc (FILE *__stream);
+            ^
+hw7test.c:70:4: error: incompatible type for argument 2 of ‘ungetc’
+    ungetc(ch, fp);
+    ^
+In file included from hw7test.c:1:0:
+/usr/include/stdio.h:702:12: note: expected ‘struct FILE *’ but argument is of type ‘FILE’
+ extern int ungetc (int __c, FILE *__stream);
+            ^
+hw7test.c:71:31: error: subscripted value is neither array nor pointer nor vector
+    fscanf(fp, "%d", &bucket[j][i]);
+                               ^
+hw7test.c:71:4: error: incompatible type for argument 1 of ‘fscanf’
+    fscanf(fp, "%d", &bucket[j][i]);
+    ^
+In file included from /usr/include/features.h:374:0,
+                 from /usr/include/stdio.h:27,
+                 from hw7test.c:1:
+/usr/include/stdio.h:443:12: note: expected ‘struct FILE * __restrict__’ but argument is of type ‘FILE’
+ extern int __REDIRECT (fscanf, (FILE *__restrict __stream,
+            ^
+
