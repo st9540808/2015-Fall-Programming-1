@@ -48,7 +48,6 @@ public class Addition extends IOperation {
 				add(num1Array, num2Array, result);
 				tensComplement(result);
 				resultSign = true;
-				System.out.println("hi");
 			}
 		}
 
@@ -87,11 +86,13 @@ public class Addition extends IOperation {
 		String str = "";
 		boolean reachFirstNonzeroDigit = false;
 		for (int i = 0; i < array.length; ++i) {
-			if (!reachFirstNonzeroDigit && array[i] != 0)
+			if (reachFirstNonzeroDigit == false && array[i] != 0)
 				reachFirstNonzeroDigit = true;
 			if (reachFirstNonzeroDigit)
 				str = str + Character.forDigit(array[i], 10);
 		}
+		if (reachFirstNonzeroDigit == false)
+			return "0";
 		
 		if (sign)
 			return '-' + str;
