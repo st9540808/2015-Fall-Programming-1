@@ -8,7 +8,7 @@ public class Comparsion extends IOperation {
 		if (num2.equals("+0") || num2.equals("-0")) num2 = "0";
 		
 		if (num1.equals(num2))
-				return "0";
+			return "0";
 		if (isLessThan(num1, num2))
 			return "-1";
 		return "1"; // greater than

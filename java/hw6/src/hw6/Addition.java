@@ -26,7 +26,7 @@ public class Addition extends IOperation {
 			add(num1Array, num2Array, result);
 		}
 		else {
-			if (num1Sign == true) { // swap
+			if (num1Sign == true) { // swap, maintain A + -B structure
 				num1Sign = false;
 				num2Sign = true;
 				String tempStr = num1;
@@ -38,12 +38,12 @@ public class Addition extends IOperation {
 			}
 
 			Comparsion cmp = new Comparsion();
-			if (cmp.perform(num1, num2).equals("1")) {
+			if (cmp.perform(num1, num2).equals("1")) { // A > B
 				tensComplement(num2Array);
 				add(num1Array, num2Array, result);
 				result[0] = 0;
 			}
-			else if (cmp.perform(num1, num2).equals("-1")) {
+			else if (cmp.perform(num1, num2).equals("-1")) { // A < B
 				tensComplement(num2Array);
 				add(num1Array, num2Array, result);
 				tensComplement(result);
