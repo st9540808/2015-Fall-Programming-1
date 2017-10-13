@@ -48,6 +48,7 @@ int main (int argc, char *argv[]) {
     for (i = id; i <= UINT_MAX; i += world_size) {
         count += checkCircuit(id, i);
     }
+    total_time = MPI_Wtime() - start_time;
  
     if (id == 0) { // master process
         int level = 1; // depth in tree
@@ -59,15 +60,14 @@ int main (int argc, char *argv[]) {
             count += recv(id + level);
         send(id - level, count);
     }
-    total_time = MPI_Wtime() - start_time;
 
+    printf("Process %d finished in %f secs of all %d process. %s\n",
+           id, total_time, world_size, processor_name);
+    fflush(stdout);
     if (id == 0) {
         printf("\nA total of %d solutions were found.\n\n", count);
         fflush(stdout);
     }
-    printf("Process %d finished in %f secs of all %d process. %s\n",
-           id, total_time, world_size, processor_name);
-    fflush(stdout);
 
     MPI_Finalize();
     return 0;
