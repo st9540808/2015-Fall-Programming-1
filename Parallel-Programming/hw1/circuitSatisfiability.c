@@ -57,7 +57,7 @@ int main (int argc, char *argv[]) {
         int level = 1, boundary = clearExceptLsb(id);
         for (; level != boundary; level <<= 1) 
             count += recv(id + level);
-		send(id - level, count);
+        send(id - level, count);
     }
     total_time = MPI_Wtime() - start_time;
 
