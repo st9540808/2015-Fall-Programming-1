@@ -50,20 +50,14 @@ int main (int argc, char *argv[]) {
     }
  
     if (id == 0) { // master process
-        int level = 1, partial_count = 0;
-        for (; level != world_size; level <<= 1) {
-            MPI_Recv(&partial_count, 1, MPI_INT, level, 0, MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
-            count += partial_count;
-        }
+        int level = 1; // depth in tree
+        for (; level != world_size; level <<= 1)
+            count += recv(level);
     } else { // slaves
-        int level = 1, partial_count = 0, boundary = clearExceptLsb(id);
-        for (; level != boundary; level <<= 1) {
-            MPI_Recv(&partial_count, 1, MPI_INT, id + level, 0, MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
-            count += partial_count;
-        }
-        MPI_Send(&count, 1, MPI_INT, id - level, 0, MPI_COMM_WORLD);
+        int level = 1, boundary = clearExceptLsb(id);
+        for (; level != boundary; level <<= 1) 
+            count += recv(id + level);
+		send(id - level, count);
     }
     total_time = MPI_Wtime() - start_time;
 
@@ -71,7 +65,6 @@ int main (int argc, char *argv[]) {
         printf("\nA total of %d solutions were found.\n\n", count);
         fflush(stdout);
     }
-    
     printf("Process %d finished in %f secs of all %d process. %s\n",
            id, total_time, world_size, processor_name);
     fflush(stdout);
