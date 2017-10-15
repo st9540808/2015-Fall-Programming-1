@@ -61,6 +61,8 @@ int main(int argc, char *argv[])
     printf("Process %d finished calulating in %f secs of all %d process. %s\n",
            id, total_time, world_size, processor_name);
     fflush(stdout);
+
+    MPI_Barrier(MPI_COMM_WORLD);
     if (id == 0) {
         printf("%.10f\n", 4 * number_in_circle / (double) number_of_tosses);
         fflush(stdout);

@@ -64,6 +64,8 @@ int main (int argc, char *argv[]) {
     printf("Process %d finished in %f secs of all %d process. %s\n",
            id, total_time, world_size, processor_name);
     fflush(stdout);
+
+    MPI_Barrier(MPI_COMM_WORLD);
     if (id == 0) {
         printf("\nA total of %d solutions were found.\n\n", count);
         fflush(stdout);
