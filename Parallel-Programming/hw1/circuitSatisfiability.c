@@ -20,13 +20,13 @@ int clearExceptLsb(int x) {
 int clearExceptMsb(int x) {
     return x & x - 1;
 }
-int recv(int recv_id) { // wrapper function for recv
+int my_recv(int recv_id) { // wrapper function for recv
     int partial_count;
     MPI_Recv(&partial_count, 1, MPI_INT, recv_id, 0, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
     return partial_count;
 }
-void send(int send_id, int partial_count) { // wrapper function for send
+void my_send(int send_id, int partial_count) { // wrapper function for send
     MPI_Send(&partial_count, 1, MPI_INT, send_id, 0, MPI_COMM_WORLD);
 }
 
@@ -53,12 +53,12 @@ int main (int argc, char *argv[]) {
     if (id == 0) { // master process
         int level = 1; // depth in tree
         for (; level != world_size; level <<= 1)
-            count += recv(level);
+            count += my_recv(level);
     } else { // slaves
         int level = 1, boundary = clearExceptLsb(id);
         for (; level != boundary; level <<= 1) 
-            count += recv(id + level);
-        send(id - level, count);
+            count += my_recv(id + level);
+        my_send(id - level, count);
     }
 
     printf("Process %d finished in %f secs of all %d process. %s\n",
