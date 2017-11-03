@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     int world_size, id, namelen;
     char processor_name[MPI_MAX_PROCESSOR_NAME]; 
     MPI_Init(&argc, &argv);
-    startwtime = MPI_Wtime();
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     MPI_Get_processor_name(processor_name, &namelen);
@@ -122,6 +121,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    startwtime = MPI_Wtime();
    
     // smooth calculate
     if (world_size == 1)
@@ -129,6 +129,9 @@ int main(int argc, char *argv[])
     else
         smooth_calculate_parallel(RGBTriple_array_mpi, id, world_size,
                                   sendcounts, displs);
+        
+    endwtime = MPI_Wtime();
+    cout << "The execution time = " << endwtime - startwtime << endl;
 
     // gathering all data
     if (world_size != 1) {
@@ -152,9 +155,6 @@ int main(int argc, char *argv[])
         else
             cout << "Save file fails!!" << endl;
     }
-        
-    endwtime = MPI_Wtime();
-    cout << "The execution time = " << endwtime - startwtime << endl;
 
     free_memory(BMPSaveData);
     free_memory(BMPData);
