@@ -45,7 +45,7 @@ void free_memory(RGBTRIPLE **data);
 int height;
 int width;
 
-void smooth_calculate_parallel(MPI_Datatype, int, int, int[], int[]);
+void smooth_calculate_parallel(MPI_Datatype, int, int, int[]);
 void smooth_calculate_single_thread(void);
 
 int main(int argc, char *argv[])
@@ -122,16 +122,19 @@ int main(int argc, char *argv[])
     }
 
     startwtime = MPI_Wtime();
+
    
     // smooth calculate
     if (world_size == 1)
         smooth_calculate_single_thread();
     else
-        smooth_calculate_parallel(RGBTriple_array_mpi, id, world_size,
-                                  sendcounts, displs);
+        smooth_calculate_parallel(RGBTriple_array_mpi, id, world_size, sendcounts);
         
+
+    // get execution time
     endwtime = MPI_Wtime();
-    cout << "The execution time = " << endwtime - startwtime << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+    printf("process %2d execution time = %f\n", id, endwtime - startwtime);
 
     // gathering all data
     if (world_size != 1) {
@@ -149,6 +152,7 @@ int main(int argc, char *argv[])
     MPI_Type_free(&RGBTriple_mpi);
     MPI_Type_free(&RGBTriple_array_mpi);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     if (id == 0) {
         if (saveBMP(outfileName))
             cout << "Save file successfully!!" << endl;
@@ -167,57 +171,31 @@ int main(int argc, char *argv[])
 
 // for multi-processor
 void smooth_calculate_parallel(MPI_Datatype RGBTriple_array_mpi, int id,
-                               int world_size, int sendcounts[], int displs[]) {
-    // calculate boundary displacement
-    int counts_all_1[32];
-    int upper_boundary[32];
-    int lower_reference[32], upper_reference[32];
-    for (int i = 0; i < world_size; i++) {
-        counts_all_1[i] = 1;
-        upper_boundary[i] = i == world_size - 1 ? height - 1 : displs[i + 1] - 1;
-        lower_reference[i] = i == 0 ? height - 1 : displs[i] - 1;
-        upper_reference[i] = i == world_size - 1 ? 0 : displs[i + 1];
-    }
-
+                               int world_size, int sendcounts[]) {
     for (int count = 0; count < NSmooth; count++) {
         // update boundary
         if (id == 0) {
-            // gather lower bounary
-            MPI_Gatherv(BMPBuffer[1], 1, RGBTriple_array_mpi,
-                        BMPSaveData[0], counts_all_1, displs, RGBTriple_array_mpi,
-                        0, MPI_COMM_WORLD);
-            // gather upper boundary
-            MPI_Gatherv(BMPBuffer[sendcounts[0]], 1, RGBTriple_array_mpi,
-                        BMPSaveData[0], counts_all_1, upper_boundary, RGBTriple_array_mpi,
-                        0, MPI_COMM_WORLD);
+            MPI_Send(BMPBuffer[1], 1, RGBTriple_array_mpi,
+                     world_size - 1, 0, MPI_COMM_WORLD);
+            MPI_Recv(BMPBuffer[sendcounts[0] + 1], 1, RGBTriple_array_mpi,
+                     (id + 1) % world_size, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(BMPBuffer[sendcounts[0]], 1, RGBTriple_array_mpi,
+                     (id + 1) % world_size, 0, MPI_COMM_WORLD);
+            MPI_Recv(BMPBuffer[0], 1, RGBTriple_array_mpi,
+                     world_size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         } else {
-            MPI_Gatherv(BMPBuffer[1], 1, RGBTriple_array_mpi,
-                        NULL, counts_all_1, displs, RGBTriple_array_mpi,
-                        0, MPI_COMM_WORLD);
-            MPI_Gatherv(BMPBuffer[sendcounts[id]], 1, RGBTriple_array_mpi,
-                        NULL, counts_all_1, upper_boundary, RGBTriple_array_mpi,
-                        0, MPI_COMM_WORLD);
+            MPI_Recv(BMPBuffer[sendcounts[id] + 1], 1, RGBTriple_array_mpi,
+                     (id + 1) % world_size, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(BMPBuffer[1], 1, RGBTriple_array_mpi,
+                     (world_size + id - 1) % world_size, 0, MPI_COMM_WORLD);
+            MPI_Recv(BMPBuffer[0], 1, RGBTriple_array_mpi,
+                     (world_size + id - 1) % world_size, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(BMPBuffer[sendcounts[id]], 1, RGBTriple_array_mpi,
+                     (id + 1) % world_size, 0, MPI_COMM_WORLD);
         }
 
-        if (id == 0) {
-            // scatter lower reference
-            MPI_Scatterv(BMPSaveData[0], counts_all_1, lower_reference, 
-                         RGBTriple_array_mpi, BMPBuffer[0], 1, RGBTriple_array_mpi,
-                         0, MPI_COMM_WORLD);
-            // scatter upper reference
-            MPI_Scatterv(BMPSaveData[0], counts_all_1, upper_reference, 
-                         RGBTriple_array_mpi, BMPBuffer[sendcounts[0] + 1],
-                         1, RGBTriple_array_mpi, 0, MPI_COMM_WORLD);
-        } else {
-            MPI_Scatterv(NULL, counts_all_1, lower_reference, 
-                         RGBTriple_array_mpi, BMPBuffer[0], 1, RGBTriple_array_mpi,
-                         0, MPI_COMM_WORLD);
-            MPI_Scatterv(NULL, counts_all_1, upper_reference, 
-                         RGBTriple_array_mpi, BMPBuffer[sendcounts[id] + 1],
-                         1, RGBTriple_array_mpi, 0, MPI_COMM_WORLD);
-        }
-
-        std::cout << "bounary updated in " << count << std::endl;
+        printf("bounary updated in %d\n", count);
+        fflush(stdout);
 
         swap(BMPBuffer, BMPData);
         for (int i = 1; i < sendcounts[id] + 1; i++) {
